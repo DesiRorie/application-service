@@ -38,7 +38,10 @@ func GetApplicationById(c *gin.Context) {
 		})
 		return
 	}
-	application, err := services.GetApplicationById(id)
-
+	application, err := services.GetApplicationById(id)ffffefdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdffdffdfdf
+	if err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(200, application)
 }
