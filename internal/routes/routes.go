@@ -26,5 +26,6 @@ func applicationRoutes(rg *gin.RouterGroup) {
 	rg.POST("/applications", handlers.CreateApplication)
 	rg.GET("/applications", handlers.GetApplications)
 	rg.GET("/applications/:id", handlers.GetApplicationById)
+	rg.DELETE("/applications/:id", handlers.DeleteApplication)
 
 }
