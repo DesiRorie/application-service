@@ -75,3 +75,39 @@ func DeleteApplication(c *gin.Context) {
 		"message": "Application has been deleted.",
 	})
 }
+func UpdateApplication(c *gin.Context) {
+	idParam := c.Param("id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid application id"})
+		return
+	}
+
+	var req struct {
+		Company string `json:"company"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	updatedApplication, err := services.UpdateApplication(id, req.Company)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":     "company updated",
+		"application": updatedApplication,
+	})
+}
+func ListApplications(c *gin.Context) {
+
+	company := c.Query("company")
+	applications := services.ListApplications(company)
+	c.JSON(http.StatusOK, applications)
+
+}

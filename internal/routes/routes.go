@@ -24,8 +24,9 @@ func healthRoutes(rg *gin.RouterGroup) {
 func applicationRoutes(rg *gin.RouterGroup) {
 
 	rg.POST("/applications", handlers.CreateApplication)
-	rg.GET("/applications", handlers.GetApplications)
+	rg.GET("/applications", handlers.ListApplications)
 	rg.GET("/applications/:id", handlers.GetApplicationById)
 	rg.DELETE("/applications/:id", handlers.DeleteApplication)
+	rg.PATCH("/applications/:id", handlers.UpdateApplication)
 
 }
