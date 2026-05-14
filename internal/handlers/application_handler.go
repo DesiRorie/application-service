@@ -3,19 +3,21 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/desirorie/job-tracker-api/internal/models"
+	"github.com/desirorie/job-tracker-api/internal/dto"
 	"github.com/desirorie/job-tracker-api/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
 func CreateApplication(c *gin.Context) {
-	var req models.Application
+	var req dto.CreateApplicationRequest
 
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
+	req.Status = strings.ToLower(req.Status)
 	createdApplication, err := services.CreateApplication(req)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})

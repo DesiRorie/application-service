@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/desirorie/job-tracker-api/internal/dto"
 	"github.com/desirorie/job-tracker-api/internal/models"
 )
 
@@ -18,8 +19,16 @@ func GetApplicationById(id int) (models.Application, error) {
 func GetApplications() []models.Application {
 	return models.Applications
 }
-func CreateApplication(application models.Application) (models.Application, error) {
-	models.Applications = append(models.Applications, application)
+func CreateApplication(application dto.CreateApplicationRequest) (dto.CreateApplicationRequest, error) {
+
+	newApplication := models.Application{
+		ID:       len(models.Applications) + 1,
+		Company:  application.Company,
+		Position: application.Position,
+		Status:   application.Status,
+		Notes:    application.Notes,
+	}
+	models.Applications = append(models.Applications, newApplication)
 	return application, nil
 }
 
