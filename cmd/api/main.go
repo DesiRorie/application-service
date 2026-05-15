@@ -1,14 +1,21 @@
 package main
 
 import (
-	"github.com/desirorie/job-tracker-api/internal/routes"
+	"log"
+
+	"github.com/desirorie/job-tracker-api/internal/database"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	router := gin.Default()
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("failed to load .env file")
+	}
 
-	routes.RegisterRoutes(router)
+	database.Connect()
 
-	router.Run(":8080")
+	r := gin.Default()
+
+	r.Run(":8080")
 }
