@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/desirorie/job-tracker-api/internal/dto"
 	"github.com/desirorie/job-tracker-api/internal/services"
@@ -17,23 +16,27 @@ func CreateApplication(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
-	req.Status = strings.ToLower(req.Status)
+
 	createdApplication, err := services.CreateApplication(req)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message":     "application created",
 		"application": createdApplication,
 	})
-
 }
 
 func GetApplications(c *gin.Context) {
+	applications, err := services.GetApplications()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	applications := services.GetApplications()
 	c.JSON(http.StatusOK, applications)
-
 }
 
 func GetApplicationById(c *gin.Context) {
@@ -41,42 +44,39 @@ func GetApplicationById(c *gin.Context) {
 
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "invalid id",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
+
 	application, err := services.GetApplicationById(id)
 	if err != nil {
-		c.JSON(404, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, application)
+
+	c.JSON(http.StatusOK, application)
 }
 
 func DeleteApplication(c *gin.Context) {
 	idParam := c.Param("id")
-	id, err := strconv.Atoi(idParam)
 
+	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "bad request",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
 
 	err = services.DeleteApplication(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": "Application has been deleted.",
+	c.JSON(http.StatusOK, gin.H{
+		"message": "application deleted",
 	})
 }
+
 func UpdateApplication(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -86,16 +86,14 @@ func UpdateApplication(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		Company string `json:"company"`
-	}
+	var req = dto.UpdateApplication{}
 
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	updatedApplication, err := services.UpdateApplication(id, req.Company)
+	updatedApplication, err := services.UpdateApplication(id, req)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -106,10 +104,15 @@ func UpdateApplication(c *gin.Context) {
 		"application": updatedApplication,
 	})
 }
+
 func ListApplications(c *gin.Context) {
-
 	company := c.Query("company")
-	applications := services.ListApplications(company)
-	c.JSON(http.StatusOK, applications)
 
+	applications, err := services.ListApplications(company)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, applications)
 }

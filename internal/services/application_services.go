@@ -4,70 +4,111 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/desirorie/job-tracker-api/internal/database"
 	"github.com/desirorie/job-tracker-api/internal/dto"
 	"github.com/desirorie/job-tracker-api/internal/models"
+	"gorm.io/gorm"
 )
 
 func GetApplicationById(id int) (models.Application, error) {
-	for _, application := range models.Applications {
-		if application.ID == id {
-			return application, nil
-		}
-	}
-	return models.Application{}, errors.New("application not found")
-}
-func GetApplications() []models.Application {
-	return models.Applications
-}
-func CreateApplication(application dto.CreateApplicationRequest) (dto.CreateApplicationRequest, error) {
+	var application models.Application
 
-	newApplication := models.Application{
-		ID:       len(models.Applications) + 1,
-		Company:  application.Company,
-		Position: application.Position,
-		Status:   application.Status,
-		Notes:    application.Notes,
+	err := database.DB.First(&application, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.Application{}, errors.New("application not found")
+		}
+		return models.Application{}, err
 	}
-	models.Applications = append(models.Applications, newApplication)
+
 	return application, nil
 }
 
+func GetApplications() ([]models.Application, error) {
+	var applications []models.Application
+
+	err := database.DB.Find(&applications).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return applications, nil
+}
+
+func CreateApplication(req dto.CreateApplicationRequest) (models.Application, error) {
+	newApplication := models.Application{
+		Company:  req.Company,
+		Position: req.Position,
+		Status:   strings.ToLower(req.Status),
+		Notes:    req.Notes,
+	}
+
+	err := database.DB.Create(&newApplication).Error
+	if err != nil {
+		return models.Application{}, err
+	}
+
+	return newApplication, nil
+}
+
 func DeleteApplication(id int) error {
-	for i, application := range models.Applications {
+	result := database.DB.Delete(&models.Application{}, id)
 
-		if application.ID == id {
-			models.Applications = append(
-				models.Applications[:i],
-				models.Applications[i+1:]...,
-			)
-			return nil
-		}
-	}
-	return errors.New("Delete unsuccessful, application not found")
-}
-func UpdateApplication(id int, company string) (models.Application, error) {
-	for i, application := range models.Applications {
-		if application.ID == id {
-			models.Applications[i].Company = company
-			return models.Applications[i], nil
-		}
+	if result.Error != nil {
+		return result.Error
 	}
 
-	return models.Application{}, errors.New("application not found")
+	if result.RowsAffected == 0 {
+		return errors.New("application not found")
+	}
+
+	return nil
 }
 
-func ListApplications(company string) []models.Application {
-	if company == "" {
-		return models.Applications
+func UpdateApplication(id int, req dto.UpdateApplication) (models.Application, error) {
+	var application models.Application
 
-	}
-	var filtered []models.Application
-
-	for _, application := range models.Applications {
-		if strings.EqualFold(application.Company, company) {
-			filtered = append(filtered, application)
+	err := database.DB.First(&application, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.Application{}, errors.New("application not found")
 		}
+		return models.Application{}, err
 	}
 
-	return filtered
+	if err != nil {
+		return models.Application{}, err
+	}
+	if req.Company != "" {
+
+		application.Company = req.Company
+	}
+	if req.Position != "" {
+		application.Position = req.Position
+	}
+	if req.Status != "" {
+		application.Status = strings.ToLower(req.Status)
+	}
+	if req.Notes != "" {
+		application.Notes = req.Notes
+	}
+	err = database.DB.Save(&application).Error
+	return application, nil
+}
+
+func ListApplications(company string) ([]models.Application, error) {
+	var applications []models.Application
+
+	query := database.DB
+
+	if company != "" {
+		query = query.Where("LOWER(company) = LOWER(?)", company)
+	}
+
+	err := query.Find(&applications).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return applications, nil
 }

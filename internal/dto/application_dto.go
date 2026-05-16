@@ -6,3 +6,9 @@ type CreateApplicationRequest struct {
 	Status   string `json:"status" binding:"required"`
 	Notes    string `json:"notes"`
 }
+type UpdateApplication struct {
+	Company  string `json:"company"`
+	Position string `json:"position"`
+	Status   string `json:"status" `
+	Notes    string `json:"notes"`
+}
