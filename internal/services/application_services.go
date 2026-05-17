@@ -7,6 +7,7 @@ import (
 	"github.com/desirorie/job-tracker-api/internal/database"
 	"github.com/desirorie/job-tracker-api/internal/dto"
 	"github.com/desirorie/job-tracker-api/internal/models"
+	"github.com/desirorie/job-tracker-api/internal/repository"
 	"gorm.io/gorm"
 )
 
@@ -66,9 +67,8 @@ func DeleteApplication(id int) error {
 }
 
 func UpdateApplication(id int, req dto.UpdateApplication) (models.Application, error) {
-	var application models.Application
 
-	err := database.DB.First(&application, id).Error
+	application, err := repository.GetApplicationByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return models.Application{}, errors.New("application not found")
@@ -76,9 +76,6 @@ func UpdateApplication(id int, req dto.UpdateApplication) (models.Application, e
 		return models.Application{}, err
 	}
 
-	if err != nil {
-		return models.Application{}, err
-	}
 	if req.Company != "" {
 
 		application.Company = req.Company
@@ -92,8 +89,7 @@ func UpdateApplication(id int, req dto.UpdateApplication) (models.Application, e
 	if req.Notes != "" {
 		application.Notes = req.Notes
 	}
-	err = database.DB.Save(&application).Error
-	return application, nil
+	return repository.SaveApplication(application)
 }
 
 func ListApplications(company string) ([]models.Application, error) {
